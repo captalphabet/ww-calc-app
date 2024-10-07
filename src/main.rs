@@ -24,6 +24,7 @@ fn main() {
 // - optional re-roll threshold
 // - return number of passes and 'critical passes'
 
+#[allow(dead_code)]
 enum ReRollCond {
     Thres(usize),
     One,
@@ -46,6 +47,7 @@ impl Default for CheckParams {
 }
 
 /// Holds set of dice checks
+#[allow(dead_code)]
 #[derive(Debug)]
 struct DiceRes {
     passes: usize,
@@ -76,7 +78,6 @@ impl DiceRes {
 
         // Handle re-roll conditions
         if let Some(reroll_cond) = &params.reroll_thres {
-
             match reroll_cond {
                 ReRollCond::One => {
                     // Re-roll one dice if there is at least one failed roll
@@ -97,25 +98,19 @@ impl DiceRes {
             }
         }
         // Rolling the rerolls
-        let mut rerolled_counts: HashMap<usize,usize> = HashMap::new();
-        enumerate_rolls(&mut rerolled_counts, reroll_count , dice_roll);
+        let mut rerolled_counts: HashMap<usize, usize> = HashMap::new();
+        enumerate_rolls(&mut rerolled_counts, reroll_count, dice_roll);
 
-
-        rerolled_counts.iter()
-            .filter(|(roll, count)| **roll>=params.pass_thres)
+        rerolled_counts
+            .iter()
+            .filter(|(roll, _count)| **roll >= params.pass_thres)
             .for_each(|(roll, count)| {
                 if *roll >= params.crit_thres {
                     crits += *count;
-
                 } else {
                     passes += *count;
                 }
-
-
-
-               
             });
-
 
         passed_checks.iter().for_each(|(roll, count)| {
             if *roll >= params.crit_thres {
@@ -127,7 +122,7 @@ impl DiceRes {
 
         Self { passes, crits }
     }
-
+    #[allow(dead_code)]
     const fn total_pass(&self) -> usize {
         self.crits + self.passes
     }
