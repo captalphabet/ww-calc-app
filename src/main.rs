@@ -2,10 +2,9 @@ use std::collections::HashMap;
 
 use rand::{thread_rng, Rng};
 
-
 fn main() {
-    let  params = CheckParams {
-        reroll_thres: Some(ReRollCond::One),
+    let params = CheckParams {
+        reroll_thres: Some(ReRollCond::Thres(2)),
         ..Default::default()
     };
     let res = DiceRes::dice_check(10, params);
@@ -62,9 +61,10 @@ impl DiceRes {
         enumerate_rolls(&mut roll_counts, num, dice_roll);
 
         // checks for critical successes and saves the failed rolls for potential re rolls
-        let (mut passed_checks, mut failed_checks): (HashMap<usize,usize>, HashMap<usize,usize>) = roll_counts
-            .iter()
-            .partition(|(roll, _count)| **roll >= params.pass_thres);
+        let (passed_checks, failed_checks): (HashMap<usize, usize>, HashMap<usize, usize>) =
+            roll_counts
+                .iter()
+                .partition(|(roll, _count)| **roll >= params.pass_thres);
 
         // to handle re rolls we can compute the number of dice to roll and merge the result with
         // passed_checks
@@ -72,17 +72,49 @@ impl DiceRes {
         // ReRollCond::One -> roll one dice ONLY if at least one fail
         // ReRoll::Thres(val) -> roll the sum of failed dice that satisfy the re roll threshold
 
-        
+        let mut reroll_count = 0;
+
+        // Handle re-roll conditions
+        if let Some(reroll_cond) = &params.reroll_thres {
+
+            match reroll_cond {
+                ReRollCond::One => {
+                    // Re-roll one dice if there is at least one failed roll
+                    if !failed_checks.is_empty() {
+                        reroll_count = 1;
+                    }
+                }
+                ReRollCond::Thres(val) => {
+                    // Re-roll all failed rolls that are less than or equal to `val` for example
+                    // for re rolling all rolls <= 2, would approximate full rerolls for a hit
+                    // thresh of 3+
+                    for (roll, count) in &failed_checks {
+                        if *roll <= *val {
+                            reroll_count += count;
+                        }
+                    }
+                }
+            }
+        }
+        // Rolling the rerolls
+        let mut rerolled_counts: HashMap<usize,usize> = HashMap::new();
+        enumerate_rolls(&mut rerolled_counts, reroll_count , dice_roll);
 
 
-        
-        
-        
-        
-        
+        rerolled_counts.iter()
+            .filter(|(roll, count)| **roll>=params.pass_thres)
+            .for_each(|(roll, count)| {
+                if *roll >= params.crit_thres {
+                    crits += *count;
+
+                } else {
+                    passes += *count;
+                }
 
 
 
+               
+            });
 
 
         passed_checks.iter().for_each(|(roll, count)| {
