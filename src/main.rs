@@ -1,9 +1,10 @@
-use std::{collections::HashMap, usize};
+use std::collections::HashMap;
 
 use rand::{thread_rng, Rng};
 
+
 fn main() {
-    let mut params = CheckParams {
+    let  params = CheckParams {
         reroll_thres: Some(ReRollCond::One),
         ..Default::default()
     };
@@ -61,30 +62,34 @@ impl DiceRes {
         enumerate_rolls(&mut roll_counts, num, dice_roll);
 
         // checks for critical successes and saves the failed rolls for potential re rolls
-        let (passed_checks, failed_checks): (Vec<_>, Vec<_>) = roll_counts
+        let (mut passed_checks, mut failed_checks): (HashMap<usize,usize>, HashMap<usize,usize>) = roll_counts
             .iter()
             .partition(|(roll, _count)| **roll >= params.pass_thres);
 
-        let mut reroll_counts: HashMap<usize, usize> = HashMap::new();
+        // to handle re rolls we can compute the number of dice to roll and merge the result with
+        // passed_checks
+        // Need to handle all the re roll cases
+        // ReRollCond::One -> roll one dice ONLY if at least one fail
+        // ReRoll::Thres(val) -> roll the sum of failed dice that satisfy the re roll threshold
 
-        dbg!(&failed_checks);
+        
 
-        match params.reroll_thres {
-            None => (),
-            Some(ReRollCond::One) => {
-                // need to check if failed_checks is either empty or all entries has 0 count
-                enumerate_rolls(&mut reroll_counts, 1, dice_roll);
-            }
-            Some(ReRollCond::Thres(thres)) => {
-                // need to count how many failed within the re-roll threshold
-            }
-        }
+
+        
+        
+        
+        
+        
+
+
+
+
 
         passed_checks.iter().for_each(|(roll, count)| {
-            if **roll >= params.crit_thres {
-                crits += **count;
+            if *roll >= params.crit_thres {
+                crits += *count;
             } else {
-                passes += **count;
+                passes += *count;
             }
         });
 
